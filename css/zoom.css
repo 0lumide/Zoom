@@ -1,0 +1,45 @@
+.zoom-element .Icon--zoom:before {
+  content: '\F058';
+}
+
+.zoomed .zoom-element .Icon--zoom{
+  color: #e81c4f;
+}
+
+/* Hide Controls*/
+.zoomed .GalleryTweet, .zoomed .GalleryNav, .zoomed .modal-btn {
+  display: none !important;
+}
+
+.GalleryNav.GalleryNav--next {
+  width: 33% !important;
+}
+
+.Gallery-media .media-image {
+  cursor: zoom-in;
+}
+
+.zoomed .Gallery-media .media-image {
+  max-width: 100%;
+  max-height: 100%;
+  cursor: zoom-out;
+  height: 200% !important;
+  width: 200% !important;
+}
+
+.zoomed .Gallery-media {
+  background-color: rgba(0, 0, 0, 0);
+  border-radius: 0 0 0 0;
+}
+
+.zoomed.Gallery {
+  text-align: initial;
+}
+
+.zoomed .Gallery-content {
+  min-height: 0px !important;
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute !important;
+  background-color: rgba(0, 0, 0, 0);
+}
