@@ -1,0 +1,9 @@
+{
+    "title": "Zoom",
+    "description": "Image zoom for twitter",
+    "details": "A chrome extension that enables image zooming for twitter images",
+    "destinationLink": "https://chrome.google.com/webstore/detail/zoom-for-twitter%C2%AE/nnpfigodphdaapfmkbgmkljndjckkegk",
+    "iconImage": "img/icon.png",
+    "media": [],
+    "ignore": false
+}
