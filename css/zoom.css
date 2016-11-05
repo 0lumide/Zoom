@@ -23,23 +23,55 @@
   max-width: 100%;
   max-height: 100%;
   cursor: zoom-out;
-  height: 200% !important;
-  width: 200% !important;
+  height: auto !important;
+  width: auto !important;
+}
+
+.Gallery-content {
+  background-color: rgba(0, 0, 0, 0) !important;
+}
+
+.Gallery-media {
+  transition: background-color 0.5s ease;
+}
+
+.zoomed .Gallery-media {
+  transition: background-color 0s ease;
 }
 
 .zoomed .Gallery-media {
   background-color: rgba(0, 0, 0, 0);
   border-radius: 0 0 0 0;
+  height: 100% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/*Center gallery content horizontally*/
 .zoomed.Gallery {
   text-align: initial;
 }
 
 .zoomed .Gallery-content {
+  transition: height 0.1s ease, width 0.1s ease;
   min-height: 0px !important;
-  width: 100% !important;
+  width: 99% !important;
   height: 100% !important;
-  position: absolute !important;
-  background-color: rgba(0, 0, 0, 0);
+  animation: enlarge 0.3s ease-in-out forwards;
+}
+
+/*Use animation because transition needs initial height
+  and setting an initial height manually messes up with twitter's
+  min-height calculation after going to next picture
+*/
+@keyframes enlarge {
+  from {
+    /*50% is just a random value*/
+    height: 50%;
+  }
+
+  to {
+    height: 99%;
+  }
 }
