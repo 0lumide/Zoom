@@ -6,8 +6,9 @@
   color: #e81c4f;
 }
 
-/* Hide Controls*/
-.zoomed .GalleryTweet, .zoomed .GalleryNav, .zoomed .modal-btn {
+/* Hide Controls and stickers*/
+.zoomed .GalleryTweet, .zoomed .GalleryNav, .zoomed .modal-btn,
+.zoomed .StickersMediaImage-blackBar, .zoomed .StickersMediaImage-stickerLink {
   display: none !important;
 }
 
@@ -46,11 +47,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-/*Center gallery content horizontally*/
-.zoomed.Gallery {
-  text-align: initial;
 }
 
 .zoomed .Gallery-content {

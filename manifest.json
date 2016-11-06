@@ -21,7 +21,7 @@
         "128": "icon128.png"
     },
     "manifest_version": 2,
-    "name": "Zoom for twitter®",
+    "name": "Zoom for Twitter®",
     "short_name" : "Zoom",
-    "version": "0.1.0.1"
+    "version": "0.1.0.2"
 }
