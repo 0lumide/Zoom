@@ -1,13 +1,15 @@
 const zoom_class = 'zoom-element';
 
-function Zoom() {
+function Zoom(width, height) {
 	this.xTranslation = 0;
 	this.yTranslation = 0;
+	this.maxWidth = width;
+	this.maxHeight = height;
 	this.scale = 1;
 }
 
 Zoom.prototype.setXTranslation = function(translation) {
-	this.yTranslation = Math.min(Math.max(-50, translation), 50);
+	this.xTranslation = Math.min(Math.max(-50, translation), 50);
 }
 
 Zoom.prototype.setYTranslation = function(translation) {
@@ -17,15 +19,127 @@ Zoom.prototype.setYTranslation = function(translation) {
 Zoom.prototype.setScale = function(scale) {
 	if(scale < 1) {
 		this.scale = 1;
+	} else if(scale > 50) {
+		this.scale = 50;
 	} else {
 		this.scale = scale;
 	}
 }
 
-function Controller(width, height) {
-	this.zoom = new Zoom();
-	this.origWidth = width;
-	this.origHeight = height;
+// percent is percentage that's displayed / inferred from the input
+Zoom.prototype.translate = function(percentX, percentY) {
+	// Since the image doesn't have a fixed size when the scale is 1
+	// I calculate the what the size would be if scale was 1
+	var height, width;
+	var heightRatio = this.maxHeight / window.innerHeight;
+	var widthRatio = this.maxWidth / window.innerWidth;
+	if(heightRatio > widthRatio) {
+		height = window.innerHeight;
+		width = this.maxWidth * height / this.maxHeight;
+	}else {
+		width = window.innerWidth;
+		height = this.maxHeight * width / this.maxWidth;
+	}
+
+	//correct for images smaller than the screen
+	if(this.maxHeight < height && this.maxWidth < width) {
+		width = this.maxWidth;
+		height = this.maxHeight;
+	}
+
+	// Calculate scaled size;
+	width *= this.scale;
+	height *= this.scale;
+
+	percentX = this.mapPercent(percentX);
+	percentY = this.mapPercent(percentY);
+
+	if(width > window.innerWidth) {
+		var overflow = width - window.innerWidth;
+		var scroll = percentX * overflow / 200;
+		var scrollPercent = scroll * 100 / width;
+		this.setXTranslation(-scrollPercent);
+	} else {
+		this.setXTranslation(0);
+	}
+
+	if(height > window.innerHeight) {
+		var overflow = height - window.innerHeight;
+		var scroll = percentY * overflow / 200;
+		var scrollPercent = scroll * 100 / height;
+		this.setYTranslation(-scrollPercent);
+	} else {
+		this.setYTranslation(0);
+	}
+}
+
+Zoom.prototype.mapPercent = function(percent) {
+	percent -= 50;
+	var sign = 1;
+	if(percent < 0) {
+		sign = -1;
+	}
+	percent = Math.abs(percent);
+	percent = Math.min(30, percent);
+	percent = percent * 100 / 30;
+
+	return sign * percent;
+}
+
+function Controller(image, zoom) {
+	this.zoom = zoom;
+	this.image = image;
+	this._init();
+}
+
+Controller.prototype._init = function() {
+	this._createScrollListener();
+	this._createMouseListener();
+	this._createZoomListener();
+	this._createTranslateListener();
+}
+
+Controller.prototype._createZoomListener = function() {
+	this.addScaleListener((scale) => {
+		this.image.style.transform = `scale(${scale}) translate(${this.zoom.xTranslation}%, ${this.zoom.yTranslation}%)`;
+	});
+}
+
+Controller.prototype._createTranslateListener = function() {
+	this.addTranslationListener((xTranslation, yTranslation) => {
+		this.image.style.transform = `scale(${this.zoom.scale}) translate(${xTranslation}%, ${yTranslation}%)`;
+	});
+}
+
+Controller.prototype._createScrollListener = function() {
+	this.image.addEventListener('wheel', (event) => {
+		if(this.image.matches(".zoomed .Gallery-media .media-image")) {
+			if(event.deltaY < 0) {
+				this.zoomIn();
+			} else if(event.deltaY > 0) {
+				this.zoomOut();
+			}
+			if(this._lastMouseX && this._lastMouseY) {
+				this.translate(this._lastMouseX, this._lastMouseY);
+			}
+			return false;
+		}
+	}, false);
+}
+
+Controller.prototype._createMouseListener = function() {
+	// Attach mouse position listener
+	this.image.addEventListener('mousemove', (event) => {
+		if(this.image.matches(".zoomed .Gallery-media .media-image")) {
+			var x = event.clientX;
+			var y = event.clientY;
+			var w = window.innerWidth;
+			var h = window.innerHeight;
+			this._lastMouseX = (100 * x)/w;
+			this._lastMouseY = (100 * y)/h;
+			this.translate(this._lastMouseX, this._lastMouseY);
+		}
+	}, false);
 }
 
 Controller.prototype.addScaleListener = function(listener) {
@@ -59,65 +173,19 @@ Controller.prototype._notifyTranslationListeners = function() {
 }
 
 Controller.prototype.zoomIn = function() {
-	this.zoom.setScale(this.zoom + 0.2);
+	this.zoom.setScale(this.zoom.scale * 1.2);
 	this._notifyScaleListeners();
 }
 
 Controller.prototype.zoomOut = function() {
-	this.scale -= 0.2;
+	this.zoom.setScale(this.zoom.scale / 1.2);
 	this._notifyScaleListeners();
 }
 
 // percent is percentage that's displayed / inferred from the input
 Controller.prototype.translate = function(percentX, percentY) {
-	// Since the image doesn't have a fixed size when the scale is 1
-	// I calculate the what the size would be if scale was 1
-	var height, width;
-	var heightRatio = this.origHeight / window.innerHeight;
-	var widthRatio = this.origWidth / window.innerWidth;
-	if(heightRatio > widthRatio) {
-		height = window.innerHeight;
-		width = this.origWidth * height / this.origHeight;
-	}else {
-		width = window.innerWidth;
-		height = this.origHeight * width / this.origWidth;
-	}
-
-	// Calculate scaled size;
-	width *= this.zoom.scale;
-	height *= this.zoom.scale;
-
-	percentX = this.mapPercent(percentX);
-	percentY = this.mapPercent(percentY);
-
-	if(width > window.innerWidth) {
-		var overflow = width - window.innerWidth;
-		var scroll = percentX * overflow / 200;
-		var scrollPercent = scroll * 100 / width;
-		this.zoom.setXTranslation(scrollPercent);
-	}
-
-	if(height > window.innerHeight) {
-		var overflow = height - window.innerHeight;
-		var scroll = percentY * overflow / 200;
-		var scrollPercent = scroll * 100 / height;
-		this.zoom.setYTranslation(scrollPercent);
-	}
-
+	this.zoom.translate(percentX, percentY);
 	this._notifyTranslationListeners();
-}
-
-Controller.prototype.mapPercent = function(percent) {
-	percent -= 50;
-	var sign = 1;
-	if(percent < 0) {
-		sign = -1;
-	}
-	percent = Math.abs(percent);
-	percent = Math.max(5, percent);
-	percent = percent * 100 / 45;
-
-	return sign * percent;
 }
 
 function ZoomButton() {
@@ -166,13 +234,17 @@ ZoomButton.prototype._createElements = function() {
 }
 
 function toggleZoom(){
-	document.querySelector('.Gallery').classList.toggle('zoomed');
+	var gallery = document.querySelector('.Gallery');
+	var isZoomed = gallery.classList.toggle('zoomed');
+	if(!isZoomed) {
+		var image = document.querySelector('.Gallery-media .media-image');
+		image.style.transform = "";
+	}
 };
 
 var buttonObserver = new MutationObserver(function(mutations) {
   mutations.forEach(function(mutation) {
 		if(mutation.addedNodes && mutation.addedNodes.length > 0) {
-			console.log('Added:');
 			var zoomButton = new ZoomButton();
 
 			zoomButton.addClickListener(toggleZoom);
@@ -192,7 +264,9 @@ var imageObserver = new MutationObserver(function(mutations) {
 		if(mutation.addedNodes && mutation.addedNodes.length > 0) {
 			var image = document.querySelector('.Gallery-media .media-image');
 			image.addEventListener('click', toggleZoom);
-			var controller = new Controller(image.width, image.height);
+			var zoom = new Zoom(image.naturalWidth, image.naturalHeight);
+			var controller = new Controller(image, zoom);
+			// TODO create slider button
 		}
   });
 });
