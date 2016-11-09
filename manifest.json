@@ -23,5 +23,5 @@
     "manifest_version": 2,
     "name": "Zoom for Twitter®",
     "short_name" : "Zoom",
-    "version": "1.0.0.0"
+    "version": "1.0.0.1"
 }

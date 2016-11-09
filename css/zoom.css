@@ -26,6 +26,7 @@
   cursor: zoom-out;
   height: auto !important;
   width: auto !important;
+  pointer-events: all;
 }
 
 .Gallery-content {
@@ -38,6 +39,7 @@
 
 .zoomed .Gallery-media {
   transition: background-color 0s ease;
+  pointer-events: none;
 }
 
 .zoomed .Gallery-media {
@@ -55,6 +57,7 @@
   width: 99% !important;
   height: 100% !important;
   animation: enlarge 0.3s ease-in-out forwards;
+  pointer-events: none;
 }
 
 /*Use animation because transition needs initial height

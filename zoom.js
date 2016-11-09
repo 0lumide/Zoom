@@ -1,11 +1,9 @@
 const zoom_class = 'zoom-element';
 
 function Zoom(width, height) {
-	this.xTranslation = 0;
-	this.yTranslation = 0;
 	this.maxWidth = width;
 	this.maxHeight = height;
-	this.scale = 1;
+	this.resetState();
 }
 
 Zoom.prototype.setXTranslation = function(translation) {
@@ -24,10 +22,21 @@ Zoom.prototype.setScale = function(scale) {
 	} else {
 		this.scale = scale;
 	}
+	this.translate(this._lastPercentX, this._lastPercentY);
+}
+
+Zoom.prototype.resetState = function() {
+	this.scale = 1;
+	this.xTranslation = 0;
+	this.yTranslation = 0;
+	this._lastPercentX = 0;
+	this._lastPercentY = 0;
 }
 
 // percent is percentage that's displayed / inferred from the input
 Zoom.prototype.translate = function(percentX, percentY) {
+	this._lastPercentX = percentX;
+	this._lastPercentY = percentY;
 	// Since the image doesn't have a fixed size when the scale is 1
 	// I calculate the what the size would be if scale was 1
 	var height, width;
@@ -87,12 +96,17 @@ Zoom.prototype.mapPercent = function(percent) {
 }
 
 function Controller(image, zoom) {
-	this.zoom = zoom;
-	this.image = image;
-	this._init();
+	this._initCloseTarget ();
+	if(image && zoom) {
+		this.init(image, zoom);
+	}
 }
 
-Controller.prototype._init = function() {
+Controller.prototype.init = function(image, zoom) {
+	this.zoom = zoom;
+	this.image = image;
+	this._translationListeners = [];
+	this._scaleListeners = [];
 	this._createScrollListener();
 	this._createMouseListener();
 	this._createZoomListener();
@@ -119,9 +133,6 @@ Controller.prototype._createScrollListener = function() {
 			} else if(event.deltaY > 0) {
 				this.zoomOut();
 			}
-			if(this._lastMouseX && this._lastMouseY) {
-				this.translate(this._lastMouseX, this._lastMouseY);
-			}
 			return false;
 		}
 	}, false);
@@ -135,24 +146,16 @@ Controller.prototype._createMouseListener = function() {
 			var y = event.clientY;
 			var w = window.innerWidth;
 			var h = window.innerHeight;
-			this._lastMouseX = (100 * x)/w;
-			this._lastMouseY = (100 * y)/h;
-			this.translate(this._lastMouseX, this._lastMouseY);
+			this.translate((100 * x)/w, (100 * y)/h);
 		}
 	}, false);
 }
 
 Controller.prototype.addScaleListener = function(listener) {
-	if(!this._scaleListeners) {
-		this._scaleListeners = [];
-	}
 	this._scaleListeners.push(listener);
 }
 
 Controller.prototype.addTranslationListener = function(listener) {
-	if(!this._translationListeners) {
-		this._translationListeners = [];
-	}
 	this._translationListeners.push(listener);
 }
 
@@ -172,6 +175,14 @@ Controller.prototype._notifyTranslationListeners = function() {
 	}
 }
 
+Controller.prototype._initCloseTarget = function() {
+	var closeTarget = document.querySelector('.Gallery-closeTarget');
+	closeTarget.addEventListener('click', (event) => {
+		var gallery = document.querySelector('.Gallery');
+		gallery.classList.remove('zoomed');
+	});
+}
+
 Controller.prototype.zoomIn = function() {
 	this.zoom.setScale(this.zoom.scale * 1.2);
 	this._notifyScaleListeners();
@@ -187,6 +198,16 @@ Controller.prototype.translate = function(percentX, percentY) {
 	this.zoom.translate(percentX, percentY);
 	this._notifyTranslationListeners();
 }
+
+Controller.prototype.toggleZoom = function(){
+	var gallery = document.querySelector('.Gallery');
+	var isZoomed = gallery.classList.toggle('zoomed');
+	if(!isZoomed) {
+		var image = document.querySelector('.Gallery-media .media-image');
+		image.style.transform = "";
+		this.zoom.resetState();
+	}
+};
 
 function ZoomButton() {
 	this._createElements();
@@ -233,21 +254,14 @@ ZoomButton.prototype._createElements = function() {
 	this.node.appendChild(button);
 }
 
-function toggleZoom(){
-	var gallery = document.querySelector('.Gallery');
-	var isZoomed = gallery.classList.toggle('zoomed');
-	if(!isZoomed) {
-		var image = document.querySelector('.Gallery-media .media-image');
-		image.style.transform = "";
-	}
-};
+var controller = new Controller();
 
 var buttonObserver = new MutationObserver(function(mutations) {
   mutations.forEach(function(mutation) {
 		if(mutation.addedNodes && mutation.addedNodes.length > 0) {
 			var zoomButton = new ZoomButton();
 
-			zoomButton.addClickListener(toggleZoom);
+			zoomButton.addClickListener(() => {controller.toggleZoom()});
 
 			var moreButton = document.querySelector('.Gallery .ProfileTweet-action--more');
 			moreButton.parentNode.insertBefore(zoomButton.node, moreButton);
@@ -263,9 +277,9 @@ var imageObserver = new MutationObserver(function(mutations) {
   mutations.forEach(function(mutation) {
 		if(mutation.addedNodes && mutation.addedNodes.length > 0) {
 			var image = document.querySelector('.Gallery-media .media-image');
-			image.addEventListener('click', toggleZoom);
+			image.addEventListener('click', (event) => {controller.toggleZoom()});
 			var zoom = new Zoom(image.naturalWidth, image.naturalHeight);
-			var controller = new Controller(image, zoom);
+			controller.init(image, zoom);
 			// TODO create slider button
 		}
   });
