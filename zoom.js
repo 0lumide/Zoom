@@ -96,7 +96,6 @@ Zoom.prototype.mapPercent = function(percent) {
 }
 
 function Controller(image, zoom) {
-	this._initCloseTarget ();
 	if(image && zoom) {
 		this.init(image, zoom);
 	}
@@ -175,14 +174,6 @@ Controller.prototype._notifyTranslationListeners = function() {
 	}
 }
 
-Controller.prototype._initCloseTarget = function() {
-	var closeTarget = document.querySelector('.Gallery-closeTarget');
-	closeTarget.addEventListener('click', (event) => {
-		var gallery = document.querySelector('.Gallery');
-		gallery.classList.remove('zoomed');
-	});
-}
-
 Controller.prototype.zoomIn = function() {
 	this.zoom.setScale(this.zoom.scale * 1.2);
 	this._notifyScaleListeners();
@@ -202,8 +193,8 @@ Controller.prototype.translate = function(percentX, percentY) {
 Controller.prototype.toggleZoom = function(){
 	var gallery = document.querySelector('.Gallery');
 	var isZoomed = gallery.classList.toggle('zoomed');
-	if(!isZoomed) {
-		var image = document.querySelector('.Gallery-media .media-image');
+	var image = document.querySelector('.Gallery-media .media-image');
+	if(!isZoomed && image) {
 		image.style.transform = "";
 		this.zoom.resetState();
 	}
@@ -265,7 +256,7 @@ var buttonObserver = new MutationObserver(function(mutations) {
 
 			var moreButton = document.querySelector('.Gallery .ProfileTweet-action--more');
 			moreButton.parentNode.insertBefore(zoomButton.node, moreButton);
-		};
+		}
   });
 });
 
@@ -281,6 +272,11 @@ var imageObserver = new MutationObserver(function(mutations) {
 			var zoom = new Zoom(image.naturalWidth, image.naturalHeight);
 			controller.init(image, zoom);
 			// TODO create slider button
+		} else if(mutation.removedNodes && mutation.removedNodes.length > 0){
+			var gallery = document.querySelector('.Gallery');
+			if(gallery.matches('.zoomed')) {
+				controller.toggleZoom();
+			}
 		}
   });
 });
