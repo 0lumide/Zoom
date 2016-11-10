@@ -20,7 +20,8 @@
   cursor: zoom-in;
 }
 
-.zoomed .Gallery-media .media-image {
+.zoomed .Gallery-media img.media-image,
+.zoomed .Gallery-media .media-image img.StickersMediaImage-passthroughImage {
   max-width: 100%;
   max-height: 100%;
   cursor: zoom-out;
@@ -29,6 +30,15 @@
   pointer-events: all;
 }
 
+.zoomed .Gallery-media div.media-image {
+  background-image: none !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.zoomed .Gallery-media .media-image img.StickersMediaImage-passthroughImage {
+  opacity: 1 !important;
+}
 .Gallery-content {
   background-color: rgba(0, 0, 0, 0) !important;
 }

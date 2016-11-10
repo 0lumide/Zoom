@@ -126,7 +126,7 @@ Controller.prototype._createTranslateListener = function() {
 
 Controller.prototype._createScrollListener = function() {
 	this.image.addEventListener('wheel', (event) => {
-		if(this.image.matches(".zoomed .Gallery-media .media-image")) {
+		if(this.image.matches('.zoomed *')) {
 			if(event.deltaY < 0) {
 				this.zoomIn();
 			} else if(event.deltaY > 0) {
@@ -140,7 +140,7 @@ Controller.prototype._createScrollListener = function() {
 Controller.prototype._createMouseListener = function() {
 	// Attach mouse position listener
 	this.image.addEventListener('mousemove', (event) => {
-		if(this.image.matches(".zoomed .Gallery-media .media-image")) {
+		if(this.image.matches('.zoomed *')) {
 			var x = event.clientX;
 			var y = event.clientY;
 			var w = window.innerWidth;
@@ -193,9 +193,8 @@ Controller.prototype.translate = function(percentX, percentY) {
 Controller.prototype.toggleZoom = function(){
 	var gallery = document.querySelector('.Gallery');
 	var isZoomed = gallery.classList.toggle('zoomed');
-	var image = document.querySelector('.Gallery-media .media-image');
-	if(!isZoomed && image) {
-		image.style.transform = "";
+	if(!isZoomed && this.image) {
+		this.image.style.transform = "";
 		this.zoom.resetState();
 	}
 };
@@ -267,7 +266,10 @@ buttonObserver.observe(buttonTarget, buttonConfig);
 var imageObserver = new MutationObserver(function(mutations) {
   mutations.forEach(function(mutation) {
 		if(mutation.addedNodes && mutation.addedNodes.length > 0) {
-			var image = document.querySelector('.Gallery-media .media-image');
+			var image = document.querySelector('.Gallery-media img.media-image');
+			if(!image) { //Checks if the an image with twitter sticker
+				image = document.querySelector('.Gallery-media .media-image img.StickersMediaImage-passthroughImage');
+			}
 			image.addEventListener('click', (event) => {controller.toggleZoom()});
 			var zoom = new Zoom(image.naturalWidth, image.naturalHeight);
 			controller.init(image, zoom);
